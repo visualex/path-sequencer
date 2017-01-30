@@ -1,33 +1,73 @@
-var midiConnector = require('midi-launchpad').connect(1);
+'use strict';
+var midiConnector = require('midi-launchpad').connect(0); // 1
 
-// new Date().getTime()
-var note = { x:0, y:0, time:0 };
-
-var sequence = { notes:[], length:0 };
-
-var sequencer = {
-   sequences:[],
-   empty:true,
-   first:null,
-   time:0,
-   clear:function(){},
-   mute:function(){},
-   note:function(btn){
-      midiNoteOut(btn)
-   },
-};
-
+// launchpad abbreviated
 var lp = null;
 
+// main app call
 var main = function()
 {
    bindButtonEvents()
 }
 
-var midiNoteOut = function(btn)
+// one Sequencer
+// the Sequencer hasMany Sequences
+// Sequence hasMany Notes
+// the Sequencer hasMany Buttons
+// Button is a Note or Function
+class Sequencer
+{
+   constructor(){}
+   play(){}
+   stop(){}
+   tapTempo(){}
+   record(){}
+   note(){}
+}
+
+class Sequence
+{
+   add(){}
+   clear(){}
+   mute(){}
+   redouble(){}
+}
+
+
+// a map to manage all the physical buttons
+// map special buttons to special functions
+class Buttons
+{
+
+   constructor()
+   {
+      this.noteMap = Map[];
+      for (var i = 0; i < 8; i++) {
+         this.noteMap['0'+i] = new Button();
+      }
+   }
+}
+
+class Button
 {
 
 }
+
+// new Date().getTime()
+class Note
+{
+   constructor(x, y, t)
+   {
+      this.x = x;
+      this.y = y;
+      this.t = t;
+   }
+   clear(){}
+   mute(){}
+   redouble(){} // redouble the note
+}
+
+
 
 var bindButtonEvents = function()
 {
@@ -68,3 +108,5 @@ midiConnector.on("ready", function(launchpad) {
    lp = launchpad
    main()
 });
+
+
