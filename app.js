@@ -3,13 +3,16 @@ var midiConnector = require('midi-launchpad').connect(1); // 1
 
 
 var lp = null;
+var Seq = null;
 
 // main app call
 var main = function(launchpad)
 {
-   bindButtonEvents()
    lp = launchpad
+   Seq = new Sequencer();
+   Seq.main()
 }
+
 
 // one Sequencer
 // the Sequencer hasMany Sequences
@@ -18,10 +21,23 @@ var main = function(launchpad)
 // Button is a Note or Function
 class Sequencer
 {
-   static play(){}
-   static stop(){}
-   static tapTempo(){}
-   static record(){}
+   main()
+   {
+      // boot the buttons
+      this.buttons = [];
+      for (var i = 0; i < 8; i++) {
+         for (var j = 0; j < 8; j++)   {
+            var id = ('' + i + '' + j + '')
+            this.buttons[id] = new Button(id, lp.getButton(i,j));
+         }
+      }
+   }
+   play(){}
+   stop(){}
+   tapTempo(){}
+   record(){}
+   press(){}
+   release(){}
 }
 
 class Sequence
@@ -37,49 +53,69 @@ class Sequence
 // map special buttons to special functions
 class Button
 {
-   constructor(btn)
+   constructor(id, btn)
    {
-      // basics
-      this.note = null
-      this.action = null
-
       // construct
+      var parent = this
+
       this.btn = btn
-      if (btn.x < 8 && btn.y < 8) {
-         this.note = this.btn.toNote(); // todo check this
-      } else {
-         this.action = this.setAction()
-      }
+
+      this.btn.on('press', function(){
+         parent.action(true);
+      });
+
+      this.btn.on('release', function(){
+         parent.action(false);
+      });
+
    }
 
-   setAction()
+   action(por)
    {
+
+      if (por) {
+         this.btn.light(lp.colors.red.low)
+      } else {
+         this.btn.light(lp.colors.off)
+      }
+
+
+      if (!this.btn.special) {
+         return this.actionToNote(por, this.btn.toNote());
+      }
+
       if (this.btn.special == 'up,page') {
-         return this.actionRecord()
+         return this.actionRecord(por)
       }
 
       if (this.btn.special == 'down,page') {
-         return this.actionPlay()
+         return this.actionPlay(por)
       }
 
       if (this.btn.special == 'left,page') {
-         return this.actionStop()
+         return this.actionStop(por)
       }
    }
 
-   actionPlay()
+
+   actionToNote(por, note)
    {
-      Sequencer.play()
+      // console.log(note)
    }
 
-   actionStop()
+   actionPlay(por)
    {
-      Sequencer.stop()
+      Seq.play(por)
    }
 
-   actionRecord()
+   actionStop(por)
    {
-      Sequencer.record()
+      Seq.stop(por)
+   }
+
+   actionRecord(por)
+   {
+      Seq.record(por)
    }
 
 }
@@ -87,26 +123,7 @@ class Button
 // new Date().getTime()
 
 
-
-
-var bindButtonEvents = function()
-{
-   lp.on('press', function(btn) { handlePress(btn); });
-   lp.on('release', function(btn) { handleRelease(btn); });
-}
-
-var handlePress = function(btn)
-{
-   btn.light(lp.colors.red.low)
-   debugButton(btn)
-}
-
-var handleRelease = function(btn)
-{
-   btn.light(lp.colors.off)
-}
-
-var debugButton(btn)
+var debugButton = function(btn)
 {
    console.log(
       "Pressed: "+
@@ -119,7 +136,7 @@ var debugButton(btn)
 
 midiConnector.on("ready", function(launchpad) {
    console.log("the hardware is ready")
-   main(lp)
+   main(launchpad)
 });
 
 
