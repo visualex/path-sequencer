@@ -21,33 +21,113 @@ var main = function(launchpad)
 // Button is a Note or Function
 class Sequencer
 {
+   constructor()
+   {
+      this.sequences = []
+      console.log(['this.sequences', this.sequences])
+      this.recording = false
+   }
    main()
    {
       // boot the buttons
       this.buttons = [];
-      for (var i = 0; i < 8; i++) {
-         for (var j = 0; j < 8; j++)   {
+      for (var i = 0; i < 9; i++) {
+         for (var j = 0; j < 9; j++)   {
             var id = ('' + i + '' + j + '')
             this.buttons[id] = new Button(id, lp.getButton(i,j));
          }
       }
    }
    play(){}
+   lastSequence()
+   {
+      return this.sequences[this.sequences.length-1]
+   }
+   playLastSequence()
+   {
+      this.lastSequence().play(0)
+   }
    stop(){}
    tapTempo(){}
-   record(){}
-   press(){}
-   release(){}
+   record()
+   {
+      this.sequences.push(new Sequence())
+      if (!this.recording) {
+         this.recording = true
+      } else {
+         this.recording = false
+      }
+   }
+   press(btn)
+   {
+      if (!this.recording) {
+         return
+      }
+
+      if (this.lastSequence().isFirstNote(btn)) {
+         this.playLastSequence()
+      }
+
+      this.lastSequence().addBegin(btn)
+   }
+   release(btn)
+   {
+      if (!this.recording) {
+         return
+      }
+      this.lastSequence().addEnd(btn)
+   }
 }
 
 class Sequence
 {
-   add(){}
+   constructor()
+   {
+      this.notes = []
+      this.recordingNote = null
+   }
+   addBegin(btn)
+   {
+      if (this.recordingNote !== null) {
+         this.recordingNote.len = (new Date().getTime() - this.recordingNote.len);
+         this.notes.push(this.recordingNote)
+      }
+      this.recordingNote = new Note(btn)
+      this.recordingNote.len = this.recordingNote.stime = new Date().getTime()
+   }
+   addEnd(btn)
+   {
+      this.recordingNote.etime = (new Date().getTime() - this.recordingNote.stime)
+   }
+   isFirstNote(btn)
+   {
+      if (!this.notes.length) {
+         return false
+      }
+      if (btn.id === this.notes[0].btn.id) {
+         return true
+      }
+      return false
+   }
    clear(){}
    mute(){}
    redouble(){}
+   play(note)
+   {
+      console.log(note)
+   }
 }
 
+class Note
+{
+   constructor(btn)
+   {
+      this.btn = btn
+      this.len = 0
+      this.stime = 0
+      this.etime = 0
+   }
+}
 
 // a map to manage all the physical buttons
 // map special buttons to special functions
@@ -56,6 +136,12 @@ class Button
    constructor(id, btn)
    {
       // construct
+      this.id = id
+
+      this.specialColor = lp.colors.red.low
+
+      this.specialColorOn = false
+
       var parent = this
 
       this.btn = btn
@@ -73,14 +159,12 @@ class Button
    action(por)
    {
 
-      if (por) {
-         this.btn.light(lp.colors.red.low)
-      } else {
-         this.btn.light(lp.colors.off)
-      }
-
-
       if (!this.btn.special) {
+         if (por) {
+            this.btn.light(lp.colors.red.low)
+         } else {
+            this.btn.light(lp.colors.off)
+         }
          return this.actionToNote(por, this.btn.toNote());
       }
 
@@ -97,9 +181,15 @@ class Button
       }
    }
 
-
    actionToNote(por, note)
    {
+      if (por) {
+         Seq.press(this)
+      } else {
+         Seq.release(this)
+      }
+      //
+      // todo send midi signal here
       // console.log(note)
    }
 
@@ -115,16 +205,41 @@ class Button
 
    actionRecord(por)
    {
-      Seq.record(por)
+      if (!por) {
+         return; // this button ignores release
+      }
+      if (this.specialColorOn) {
+         this.specialColorOn = false
+         this.btn.light(lp.colors.off)
+      } else {
+         debug('recording')
+         this.specialColorOn = true
+         this.btn.light(this.specialColor)
+      }
+      Seq.record()
    }
 
 }
 
-// new Date().getTime()
 
+midiConnector.on("ready", function(launchpad) {
+   console.log("the hardware is ready")
+   main(launchpad)
+});
 
+var debugLevel = 1
+var debug = function(w)
+{
+   if (!debugLevel) {
+      return
+   }
+   console.log(w)
+}
 var debugButton = function(btn)
 {
+   if (!debugLevel) {
+      return
+   }
    console.log(
       "Pressed: "+
       "x:"        +btn.x          +", "+
@@ -133,12 +248,6 @@ var debugButton = function(btn)
       "special:"  +btn.special
    );
 }
-
-midiConnector.on("ready", function(launchpad) {
-   console.log("the hardware is ready")
-   main(launchpad)
-});
-
 
 /*
    Pressed: x:0, y:0, state:1, special:false
