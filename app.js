@@ -1,5 +1,13 @@
 'use strict';
 var midiConnector = require('midi-launchpad').connect(1); // 1
+var midi = require('midi')
+var output = new midi.output()
+output.getPortCount()
+output.getPortName(0)
+output.openVirtualPort('Path Sequencer')
+
+// on app close
+// output.closePort();
 
 
 var lp = null;
@@ -45,7 +53,7 @@ class Sequencer
    }
    playLastSequence()
    {
-      this.lastSequence().play(0)
+      this.lastSequence().play()
    }
    stop(){}
    tapTempo(){}
@@ -85,6 +93,7 @@ class Sequence
    {
       this.notes = []
       this.recordingNote = null
+      this.currentNote = 0
    }
    addBegin(btn)
    {
@@ -112,9 +121,26 @@ class Sequence
    clear(){}
    mute(){}
    redouble(){}
-   play(note)
+   play()
    {
-      console.log(note)
+      if (this.currentNote >= this.notes.length) {
+         this.currentNote = 0
+      }
+
+      var curNote = this.notes[this.currentNote]
+      var curButton = curNote.btn
+
+      curButton.actionFromSeq(true)
+
+      setTimeout(function(btn){
+         btn.actionFromSeq(false)
+      }, curNote.etime, curButton)
+
+      setTimeout(function(parent){
+         parent.play()
+      }, curNote.len, this)
+
+      this.currentNote++
    }
 }
 
@@ -123,9 +149,9 @@ class Note
    constructor(btn)
    {
       this.btn = btn
-      this.len = 0
+      this.len = 0   // total note len
       this.stime = 0
-      this.etime = 0
+      this.etime = 0 // pressed duration
    }
 }
 
@@ -179,6 +205,18 @@ class Button
       if (this.btn.special == 'left,page') {
          return this.actionStop(por)
       }
+   }
+
+   actionFromSeq(por)
+   {
+      if (por) {
+         output.sendMessage([144, this.btn.toNote(), 90]);
+         this.btn.light(lp.colors.red.low)
+      } else {
+         output.sendMessage([128, this.btn.toNote(), 40]);
+         this.btn.light(lp.colors.off)
+      }
+      // console.log(this.btn.toNote())
    }
 
    actionToNote(por, note)
