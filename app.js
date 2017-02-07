@@ -1,10 +1,12 @@
 'use strict';
-var midiConnector = require('midi-launchpad').connect(1); // 1
+var midiConnector = require('midi-launchpad').connect(1) // 1
+
+var file = require('fs')
 var midi = require('midi')
 var output = new midi.output()
 output.getPortCount()
 output.getPortName(0)
-output.openVirtualPort('Path Sequencer')
+output.openVirtualPort('Path Sequencer') // this is only for linux & mac
 
 // on app close
 // output.closePort();
@@ -12,6 +14,7 @@ output.openVirtualPort('Path Sequencer')
 
 var lp = null;
 var Seq = null;
+var kmap = null;
 
 // main app call
 var main = function(launchpad)
@@ -20,6 +23,7 @@ var main = function(launchpad)
    Seq = new Sequencer();
    Seq.main()
 }
+
 
 
 // one Sequencer
@@ -259,9 +263,20 @@ class Button
 
 }
 
+var loadKmap = function()
+{
+   file.readFile('kmap.json', 'utf8', function (err,data) {
+      if (err) {
+         console.log(err)
+      }
+      kmap = JSON.parse(data)
+      console.log(kmap)
+   });
+}
 
 midiConnector.on("ready", function(launchpad) {
    console.log("the hardware is ready")
+   loadKmap()
    main(launchpad)
 });
 
@@ -311,3 +326,21 @@ var debugButton = function(btn)
    Pressed: x:8, y:6, state:1, special:right,solo
    Pressed: x:8, y:7, state:1, special:right,arm
  */
+
+
+/*
+
+   8 sequences + {arm the sequence, deselect any sequence}
+x  * * * * * * * *  y
+   n 2 3 4 5 6 7 8  * {fn-play-stop: fn+x play/stop x}
+   1 n 3 4 5 6 7 8  * {fn-mute: fn+x = mute sequence, fn+n = mute n }    // mute color yellow
+   1 2 n 4 5 6 7 8  * {fn-clear: fn+x = clear sequence, fn+n = clear n}
+   1 2 3 n 5 6 7 8  *
+   1 2 3 4 n 6 7 8  *
+   1 2 3 4 5 n 7 8  *
+   1 2 3 4 5 6 n 8  * {fn-redoubles: fn+n = select, }
+   1 2 3 4 5 6 7 n  * {tempo blink tappable}
+
+ */
+
+
