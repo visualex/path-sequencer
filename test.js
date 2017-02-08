@@ -1,13 +1,9 @@
 'use strict';
-class Tester
+var file = require('fs')
+try   {
+   var kmap = file.readFileSync('kmap.jsona') //.toString();
+} catch(e)
 {
-   constructor(height, width)
-   {
-      this.height = height;
-      this.width = width;
-   }
-
-
+   console.log(e)
 }
-
-var a = new Tester(2,2);
+console.log(kmap)

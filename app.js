@@ -1,5 +1,5 @@
 'use strict';
-var midiConnector = require('midi-launchpad').connect(1) // 1
+var midiConnector = require('midi-launchpad').connect(0) // 1
 
 var file = require('fs')
 var midi = require('midi')
@@ -14,23 +14,40 @@ output.openVirtualPort('Path Sequencer') // this is only for linux & mac
 
 var lp = null;
 var Seq = null;
-var kmap = null;
+var btnconf = null;
+
+// todo add the colors to the btnconf.json as well
+var loadButtonConfig = function()
+{
+   try   {
+      var conf = file.readFileSync('btnconf.json').toString();
+      btnconf = JSON.parse(conf)
+   } catch(e)
+   {
+      // file not present or bad format, exit
+      console.log('configuration file btnconf.json file is missing or is badly formatted, exiting')
+      console.log(e)
+      process.exit(1)
+   }
+}
+
 
 // main app call
 var main = function(launchpad)
 {
+   loadButtonConfig()
    lp = launchpad
    Seq = new Sequencer();
    Seq.main()
 }
 
 
-
 // one Sequencer
 // the Sequencer hasMany Sequences
 // Sequence hasMany Notes
-// the Sequencer hasMany Buttons
-// Button is a Note or Function
+// the Sequencer hasMany Notes
+// Notes have duration, end time and a Buttons
+// Button has Functions
 class Sequencer
 {
    constructor()
@@ -161,6 +178,14 @@ class Note
 
 // a map to manage all the physical buttons
 // map special buttons to special functions
+
+/*
+   todo buttons need to call a new object, buttonController,
+   this object needs to understand button combos (2 buttons pressed at the same time)
+   from the btnconf.json json file
+   this object will also assign the buttons from their colors btnconf.json json file
+   and handle their states - mediator pattern
+ */
 class Button
 {
    constructor(id, btn)
@@ -263,20 +288,8 @@ class Button
 
 }
 
-var loadKmap = function()
-{
-   file.readFile('kmap.json', 'utf8', function (err,data) {
-      if (err) {
-         console.log(err)
-      }
-      kmap = JSON.parse(data)
-      console.log(kmap)
-   });
-}
-
 midiConnector.on("ready", function(launchpad) {
    console.log("the hardware is ready")
-   loadKmap()
    main(launchpad)
 });
 
@@ -327,8 +340,13 @@ var debugButton = function(btn)
    Pressed: x:8, y:7, state:1, special:right,arm
  */
 
-
 /*
+
+   todo 8 sequences hard limit? last 8th button can be a pager fnx: page sequences, so it can become 7*64 = 448,
+   i prefer the number 512, so the fnx could be y1
+
+
+   basic layout per btnconf.json:
 
    8 sequences + {arm the sequence, deselect any sequence}
 x  * * * * * * * *  y
@@ -340,7 +358,4 @@ x  * * * * * * * *  y
    1 2 3 4 5 n 7 8  *
    1 2 3 4 5 6 n 8  * {fn-redoubles: fn+n = select, }
    1 2 3 4 5 6 7 n  * {tempo blink tappable}
-
  */
-
-
