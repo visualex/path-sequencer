@@ -1,5 +1,5 @@
 'use strict';
-var midiConnector = require('midi-launchpad').connect(0) // 1
+var midiConnector = require('midi-launchpad').connect(1) // 1
 
 var file = require('fs')
 var midi = require('midi')
@@ -76,7 +76,14 @@ class Sequencer
    {
       this.lastSequence().play()
    }
-   stop(){}
+   stop()
+   {
+      debug('stopping all sequences')
+      for (var a in this.sequences) {
+         this.sequences[a].notes = []
+      }
+      this.sequences = []
+   }
    tapTempo(){}
    record()
    {
@@ -142,6 +149,10 @@ class Sequence
    clear(){}
    mute(){}
    redouble(){}
+   stop()
+   {
+
+   }
    play()
    {
       if (this.currentNote >= this.notes.length) {
@@ -216,7 +227,7 @@ class Button
 
       if (!this.btn.special) {
          if (por) {
-            this.btn.light(lp.colors.red.low)
+            this.btn.light(lp.colors.red.high)
          } else {
             this.btn.light(lp.colors.off)
          }
@@ -239,8 +250,8 @@ class Button
    actionFromSeq(por)
    {
       if (por) {
-         output.sendMessage([144, this.btn.toNote(), 90]);
-         this.btn.light(lp.colors.red.low)
+         output.sendMessage([144, this.btn.toNote(), 127]);
+         this.btn.light(lp.colors.red.high)
       } else {
          output.sendMessage([128, this.btn.toNote(), 40]);
          this.btn.light(lp.colors.off)
