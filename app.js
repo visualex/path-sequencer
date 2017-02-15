@@ -78,11 +78,10 @@ class Sequencer
    }
    stop()
    {
-      debug('stopping all sequences')
-      for (var a in this.sequences) {
-         this.sequences[a].notes = []
-      }
-      this.sequences = []
+      debug('stopping last sequence')
+      this.lastSequence().stop = true
+      // console.log(this.lastSequence())
+      // this.lastSequence().stop()
    }
    tapTempo(){}
    record()
@@ -119,6 +118,7 @@ class Sequence
 {
    constructor()
    {
+      this.stop = false
       this.notes = []
       this.recordingNote = null
       this.currentNote = 0
@@ -151,10 +151,14 @@ class Sequence
    redouble(){}
    stop()
    {
-
+      this.stop = true
    }
    play()
    {
+      if (this.stop) {
+         return
+      }
+
       if (this.currentNote >= this.notes.length) {
          this.currentNote = 0
       }
