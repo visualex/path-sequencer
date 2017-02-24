@@ -16,6 +16,11 @@ var lp = null;
 var Seq = null;
 var btnconf = null;
 
+var time = function()
+{
+   return new Date().getTime()
+}
+
 // todo add the colors to the btnconf.json as well
 var loadButtonConfig = function()
 {
@@ -45,8 +50,7 @@ var main = function(launchpad)
 // one Sequencer
 // the Sequencer hasMany Sequences
 // Sequence hasMany Notes
-// the Sequencer hasMany Notes
-// Notes have duration, end time and a Buttons
+// Notes have duration, end time and a Button
 // Button has Functions
 class Sequencer
 {
@@ -80,6 +84,7 @@ class Sequencer
    {
       debug('stopping last sequence')
       this.lastSequence().stop = true
+      this.sequences.pop()
       // console.log(this.lastSequence())
       // this.lastSequence().stop()
    }
@@ -126,15 +131,15 @@ class Sequence
    addBegin(btn)
    {
       if (this.recordingNote !== null) {
-         this.recordingNote.len = (new Date().getTime() - this.recordingNote.len);
+         this.recordingNote.len = (time() - this.recordingNote.len);
          this.notes.push(this.recordingNote)
       }
       this.recordingNote = new Note(btn)
-      this.recordingNote.len = this.recordingNote.stime = new Date().getTime()
+      this.recordingNote.len = this.recordingNote.stime = time()
    }
    addEnd(btn)
    {
-      this.recordingNote.etime = (new Date().getTime() - this.recordingNote.stime)
+      this.recordingNote.etime = (time() - this.recordingNote.stime)
    }
    isFirstNote(btn)
    {
@@ -199,7 +204,7 @@ class Note
    this object needs to understand button combos (2 buttons pressed at the same time)
    from the btnconf.json json file
    this object will also assign the buttons from their colors btnconf.json json file
-   and handle their states - mediator pattern
+   and handle their states - mediator or command?
  */
 class Button
 {
