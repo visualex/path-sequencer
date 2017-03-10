@@ -2,7 +2,7 @@
 Midi Sequencer for the Novation Launchpad
 
 
-## V2
+## V3 -- todo
 
 Keymapping
    function keys are mapped to functions
@@ -11,6 +11,10 @@ BPM with Taptempo & MidiSync with DAW / Live
 Precision Parameter ?
 Cleaner Code
 Muting of Notes
+
+## V2 -- todo
+Record and playback with the same button. == ignore the first note, this is not comfortable. 
+Rest are function buttons like mute, clear, redoubles. 
 
 
 ## V1
