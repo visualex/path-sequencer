@@ -14,9 +14,16 @@ Muting of Notes
 
 
 ## V1
+Simple proof of cancept, allows layering
+of infinite sequences with undo.
+
+
 one Sequencer
 the Sequencer hasMany Sequences, layered, ctrz
 Sequence hasMany Notes
 the Sequencer hasMany Buttons
 Button is a Note or Function
 
+
+## check
+https://www.npmjs.com/package/bpm
