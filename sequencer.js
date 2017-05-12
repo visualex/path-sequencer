@@ -1,10 +1,8 @@
 'use strict';
-var midiConnector = require('midi-launchpad').connect(1) // 1
+var midiConnector = require('midi-launchpad').connect(1) // change this to your midi port n
 
 var file = require('fs')
 var midi = require('midi')
-var time = require('./src/time.js')
-
 var output = new midi.output()
 output.getPortCount()
 output.getPortName(0)
@@ -18,7 +16,10 @@ var lp = null;
 var Seq = null;
 var btnconf = null;
 
-
+var time = function()
+{
+   return new Date().getTime()
+}
 
 // todo add the colors to the btnconf.json as well
 var loadButtonConfig = function()
@@ -195,16 +196,6 @@ class Note
    }
 }
 
-// a map to manage all the physical buttons
-// map special buttons to special functions
-
-/*
-   todo buttons need to call a new object, buttonController,
-   this object needs to understand button combos (2 buttons pressed at the same time)
-   from the btnconf.json json file
-   this object will also assign the buttons from their colors btnconf.json json file
-   and handle their states - mediator or command?
- */
 class Button
 {
    constructor(id, btn)
@@ -361,12 +352,7 @@ var debugButton = function(btn)
 
 /*
 
-   todo 8 sequences hard limit? last 8th button can be a pager fnx: page sequences, so it can become 7*64 = 448,
-   i prefer the number 512, so the fnx could be y1
-
-
    basic layout per btnconf.json:
-
    8 sequences + {arm the sequence, deselect any sequence}
 x  * * * * * * * *  y
    n 2 3 4 5 6 7 8  * {fn-play-stop: fn+x play/stop x}
